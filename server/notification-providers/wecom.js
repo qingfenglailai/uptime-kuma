@@ -33,17 +33,27 @@ class WeCom extends NotificationProvider {
      * @returns {object} Message
      */
     composeMessage(heartbeatJSON, msg) {
-        let title = "UptimeKuma Message";
-        if (msg != null && heartbeatJSON != null && heartbeatJSON["status"] === UP) {
-            title = "UptimeKuma Monitor Up";
+        let alertCard = "";
+        if (msg !== null && heartbeatJSON !== null && heartbeatJSON.status === DOWN) {
+            const serviceNameMatch = msg.match(/\[([^\]]+)\]/);
+            const serviceName = serviceNameMatch ? serviceNameMatch[1] : "服务";
+            const downTime = new Date().toLocaleString().replace(/\//g, "-");
+            alertCard = `### 🚨 ${serviceName}访问异常通知\n**异常时间：** ${downTime}\n**异常信息：** ${msg}`;
         }
-        if (msg != null && heartbeatJSON != null && heartbeatJSON["status"] === DOWN) {
-            title = "UptimeKuma Monitor Down";
+
+        if (!alertCard && msg !== null && heartbeatJSON !== null && heartbeatJSON.status === UP) {
+            const serviceNameMatch = msg.match(/\[([^\]]+)\]/);
+            const serviceName = serviceNameMatch ? serviceNameMatch[1] : "服务";
+            const recoverTime = new Date().toLocaleString().replace(/\//g, "-");
+            alertCard = `### 🟢 ${serviceName}访问恢复通知\n**恢复时间：** ${recoverTime}\n**信息：** ${msg}`;
+        }
+        if (!alertCard) {
+            alertCard = "无告警信息";
         }
         return {
-            msgtype: "text",
-            text: {
-                content: title + "\n" + msg
+            msgtype: "markdown",
+            markdown: {
+                content: alertCard
             }
         };
     }
